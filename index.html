@@ -67,15 +67,15 @@
   .progress{height:10px; background:#FFF1DC; border-radius:6px; overflow:hidden; margin:8px 0}
   .progress > i{display:block; height:100%; background:linear-gradient(90deg,var(--orange),var(--yellow)); border-radius:6px; transition:width .5s}
   .pet-stage{background:linear-gradient(180deg,#BEE9FF 0%,#E8F8FF 60%,#FFF8EE 100%); border-radius:22px; padding:20px; text-align:center; position:relative; overflow:hidden; min-height:280px}
-  .pet-stage .cloud{position:absolute; font-size:26px; opacity:.7; animation:drift 18s linear infinite}
+  .pet-stage .cloud{position:absolute; font-size:26px; opacity:.7; animation:drift 18s linear infinite; will-change:transform}
   .pet-stage .cloud:nth-child(2){top:30px; left:10%; animation-duration:24s}
   .pet-stage .cloud:nth-child(3){top:60px; right:8%; animation-duration:30s}
   @keyframes drift{from{transform:translateX(-30px)}to{transform:translateX(330px)}}
   .pet-wrap{width:240px;height:240px;margin:10px auto;position:relative;z-index:2}
-  .pet-img{width:220px;height:220px;object-fit:contain;animation:petBounce 2.2s ease-in-out infinite;transform-origin:bottom center;cursor:pointer;transition:filter .3s}
+  .pet-img{width:220px;height:220px;object-fit:contain;animation:petBounce 2.2s ease-in-out infinite;transform-origin:bottom center;cursor:pointer;transition:filter .3s;will-change:transform}
   .pet-img:active{animation:petWiggle .5s ease}
   .pet-img.clicked{animation:petWiggle .5s ease}
-  .pet-sparkle{position:absolute;font-size:20px;pointer-events:none;animation:sparkleFloat 2.5s ease-in-out infinite}
+  .pet-sparkle{position:absolute;font-size:20px;pointer-events:none;animation:sparkleFloat 2.5s ease-in-out infinite;will-change:transform,opacity}
   .pet-sparkle:nth-child(1){top:10px;left:30px;animation-delay:0s}
   .pet-sparkle:nth-child(2){top:30px;right:20px;animation-delay:.7s}
   .pet-sparkle:nth-child(3){bottom:40px;left:20px;animation-delay:1.4s}
@@ -400,18 +400,25 @@ function speak(text){
   if(S.ttsEngine==='cloud'){ cloudSpeak(text); }
   else { TTS.speak(text); }
 }
+var cloudAudioCache={};
 function cloudSpeak(text){
+  if(cloudAudioCache[text]){ try{new Audio(cloudAudioCache[text]).play();}catch(e){} return; }
   const isSingle=/^[\u4e00-\u9fa5]{1}$/.test(text);
   const body=JSON.stringify({input:text, voice:S.cloudVoice||'zh-CN-XiaoxiaoNeural', speed:isSingle?0.85:1.0, pitch:'0', style:'general'});
-  toast('🔊 云端发音中…',900);
   fetch('https://tts.wangwangit.com/v1/audio/speech',{method:'POST',headers:{'Content-Type':'application/json'},body:body})
     .then(r=>{ if(!r.ok) throw new Error('tts '+r.status); return r.blob(); })
-    .then(blob=>{ const u=URL.createObjectURL(blob); const a=new Audio(u); a.play(); a.onended=()=>URL.revokeObjectURL(u); })
+    .then(blob=>{ const u=URL.createObjectURL(blob); cloudAudioCache[text]=u; try{new Audio(u).play();}catch(e){} })
     .catch(e=>{ console.warn('cloud tts fail, fallback',e); TTS.speak(text); });
+}
+function cloudPrefetch(text){
+  if(!text||cloudAudioCache[text]||S.ttsEngine!=='cloud')return;
+  const body=JSON.stringify({input:text, voice:S.cloudVoice||'zh-CN-XiaoxiaoNeural', speed:1.0, pitch:'0', style:'general'});
+  fetch('https://tts.wangwangit.com/v1/audio/speech',{method:'POST',headers:{'Content-Type':'application/json'},body:body})
+    .then(r=>r.blob()).then(blob=>{ cloudAudioCache[text]=URL.createObjectURL(blob); }).catch(()=>{});
 }
 function tapWord(c, node){ const p=PINYIN[c]||''; node.classList.add('speak'); setTimeout(()=>node.classList.remove('speak'),400); speak(c); toast(c+' '+p); }
 function markKnown(c, node){ addKnown(c); node.classList.remove('new'); node.classList.add('known'); toast('✅ 已学会「'+c+'」+1'); }
-function speakLine(){ speak(curBook.text[curLine].replace(/[，。？！、]/g,' ')); }
+function speakLine(){ const t=curBook.text[curLine].replace(/[，。？！、]/g,' '); speak(t); if(curLine+1<curBook.text.length){ cloudPrefetch(curBook.text[curLine+1].replace(/[，。？！、]/g,' ')); } }
 function readNext(){ curLine++; renderRead(); }
 function readPrev(){ curLine--; renderRead(); }
 function finishBook(){ if(!S.readBooks.includes(curBook.id)){ S.readBooks.push(curBook.id); S.readMinutes+=Math.max(2,curBook.text.length); save(); } go('home'); mask('<div class="big">🎉</div><h3>读完一本啦！</h3><p>「'+curBook.title+'」阅读完成，继续加油～</p><button class="btn green" onclick="hideMask();startGame()">玩找字游戏巩固</button><button class="btn ghost" style="margin-top:10px" onclick="hideMask()">返回首页</button>'); }
@@ -838,8 +845,12 @@ function saveAIConfig(){
   S.apiUrl=aiConfig.apiUrl;
   S.aiModel=aiConfig.model;
 }
+var petImgCache={};
 function petImgLoad(img, tolerance){
+  if(img.dataset.done)return;
   tolerance = tolerance || 25;
+  var orig = img.src;
+  if(petImgCache[orig]){ img.dataset.done='1'; img.src=petImgCache[orig]; return; }
   var c = document.createElement('canvas');
   var ctx = c.getContext('2d');
   c.width = img.naturalWidth || 220; c.height = img.naturalHeight || 220;
@@ -854,7 +865,10 @@ function petImgLoad(img, tolerance){
       else if(maxEdge < tolerance*2){ px[i+3] = Math.round((maxEdge-tolerance)/tolerance*255); }
     }
     ctx.putImageData(d, 0, 0);
-    img.src = c.toDataURL('image/png');
+    var out = c.toDataURL('image/png');
+    petImgCache[orig] = out;
+    img.dataset.done='1';
+    img.src = out;
   }catch(e){}
 }
 function petClick(){ const img=document.getElementById('petImg'); if(img){ img.classList.remove('clicked'); void img.offsetWidth; img.classList.add('clicked'); setTimeout(()=>img.classList.remove('clicked'),500); } const p=PETS.find(x=>x.id===S.currentPet); if(p) speak(p.id==='rabbit'?'小白兔最可爱啦':p.id==='cat'?'喵～我是小橘猫':p.id==='dog'?'汪汪！':'吼吼～小狮子'); }
