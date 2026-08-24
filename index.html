@@ -272,10 +272,13 @@ const ACCESSORIES = [
 ];
 const DOLLS=[
   {id:'doll_base',name:'素颜娃娃',img:'doll_base.jpg',cost:0,desc:'清纯可爱·初始娃娃',emoji:'👧'},
-  {id:'doll_uniform',name:'校服娃娃',img:'doll_uniform.jpg',cost:120,desc:'元气满满学生装',emoji:'🎒'},
-  {id:'doll_princess',name:'公主娃娃',img:'doll_princess.jpg',cost:150,desc:'华丽闪亮公主裙',emoji:'👸'},
-  {id:'doll_hanfu',name:'汉服娃娃',img:'doll_hanfu.jpg',cost:200,desc:'古典飘逸汉服',emoji:'👘'},
-  {id:'doll_party',name:'派对娃娃',img:'doll_party.jpg',cost:250,desc:'闪耀派对小礼服',emoji:'🎀'}
+  {id:'doll_uniform',name:'校服娃娃',img:'doll_uniform.jpg',cost:20,desc:'元气满满学生装',emoji:'🎒'},
+  {id:'doll_sport',name:'运动娃娃',img:'doll_sport.jpg',cost:40,desc:'活力粉色运动装',emoji:'🏃'},
+  {id:'doll_dance',name:'舞蹈娃娃',img:'doll_dance.jpg',cost:60,desc:'优雅芭蕾蓬蓬裙',emoji:'🩰'},
+  {id:'doll_princess',name:'公主娃娃',img:'doll_princess.jpg',cost:80,desc:'华丽闪亮公主裙',emoji:'👸'},
+  {id:'doll_hanfu',name:'汉服娃娃',img:'doll_hanfu.jpg',cost:100,desc:'古典飘逸汉服',emoji:'👘'},
+  {id:'doll_magic',name:'魔法娃娃',img:'doll_magic.jpg',cost:120,desc:'神秘星空魔法斗篷',emoji:'🪄'},
+  {id:'doll_party',name:'派对娃娃',img:'doll_party.jpg',cost:150,desc:'闪耀派对小礼服',emoji:'🎀'}
 ];
 const NEIGHBORS = [
   {name:"乐乐",emoji:"👦",words:386,city:"北京"},
@@ -500,63 +503,9 @@ RENDER.doll=()=>{
   const cur=DOLLS.find(d=>d.id===S.currentDoll)||DOLLS[0];
   const owned=S.unlockedDolls||['doll_base'];
   const lv=Math.floor(S.petExp/50)+1;
-  return '<div class="topbar"><h1>🎀 换装娃娃</h1><div class="sub">识字积分兑换 · 拖拽衣服到娃娃身上</div><div class="avatar">'+cur.emoji+'</div></div><div style="padding:16px 16px 92px"><div class="pet-stage doll-stage" id="dollStage"><div class="cloud">☁️</div><div class="cloud">☁️</div><div class="cloud">☁️</div><div class="pet-wrap" id="dollWrap" onclick="dollClick()"><span class="pet-sparkle">✨</span><span class="pet-sparkle">💖</span><span class="pet-sparkle">⭐</span><span class="pet-sparkle">💫</span><img class="pet-img" id="dollImg" src="'+cur.img+'" alt="'+cur.name+'" onload="petImgLoad(this,25)"></div><div class="pet-name">'+cur.name+' · Lv.'+lv+'</div><div class="pet-lv">总积分 '+S.petExp+' · 已拥有 '+owned.length+'/'+DOLLS.length+' 套</div><div class="pet-mood">'+dollMood(owned.length)+'</div><div class="doll-hint">👆 长按下方衣服拖到娃娃身上换装</div></div><div class="card"><div class="section-ti">👗 娃娃衣橱 <span style="font-size:12px;color:var(--ink2);margin-left:auto">长按拖拽换装</span></div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">'+DOLLS.map(dd=>{const isOwned=owned.includes(dd.id);const isActive=S.currentDoll===dd.id;const canAfford=S.petExp>=dd.cost;let cls='pet-shop-item';if(isOwned)cls+=' owned';if(isActive)cls+=' active';if(!isOwned&&!canAfford)cls+=' locked';const tip=isOwned?(isActive?'✓ 使用中':'✅ 已解锁'):(canAfford?'💰 '+dd.cost+' 积分':'🔒 '+dd.cost+' 积分');return '<div class="'+cls+' drag-doll" data-id="'+dd.id+'" data-owned="'+isOwned+'" data-cost="'+dd.cost+'" data-name="'+dd.name+'" data-emoji="'+dd.emoji+'"><img class="pet-thumb" src="'+dd.img+'" alt="'+dd.name+'"><div style="font-weight:700;font-size:14px">'+dd.emoji+' '+dd.name+'</div><div class="pet-label">'+dd.desc+'</div><div class="pet-cost">'+tip+'</div></div>';}).join('')+'</div></div><div class="card"><div class="section-ti">📝 玩法说明</div><p style="font-size:13px;color:var(--ink2)">每认识一个新字获得1积分。长按衣服卡片拖到娃娃身上即可换装～素颜娃娃免费，校服120分，公主裙150分，汉服200分，派对装250分。点击娃娃看她开心地摇头～</p></div></div>';
-  setTimeout(function(){bindDollDrag()},100);
+  return '<div class="topbar"><h1>🎀 换装娃娃</h1><div class="sub">识字积分兑换 · 点卡片换装</div><div class="avatar">'+cur.emoji+'</div></div><div style="padding:16px 16px 92px"><div class="pet-stage doll-stage" id="dollStage"><div class="cloud">☁️</div><div class="cloud">☁️</div><div class="cloud">☁️</div><div class="pet-wrap" id="dollWrap" onclick="dollClick()"><span class="pet-sparkle">✨</span><span class="pet-sparkle">💖</span><span class="pet-sparkle">⭐</span><span class="pet-sparkle">💫</span><img class="pet-img" id="dollImg" src="'+cur.img+'" alt="'+cur.name+'" onload="petImgLoad(this,25)"></div><div class="pet-name">'+cur.name+' · Lv.'+lv+'</div><div class="pet-lv">总积分 '+S.petExp+' · 已拥有 '+owned.length+'/'+DOLLS.length+' 套</div><div class="pet-mood">'+dollMood(owned.length)+'</div></div><div class="card"><div class="section-ti">👗 娃娃衣橱 <span style="font-size:12px;color:var(--ink2);margin-left:auto">点卡片换装</span></div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">'+DOLLS.map(dd=>{const isOwned=owned.includes(dd.id);const isActive=S.currentDoll===dd.id;const canAfford=S.petExp>=dd.cost;let cls='pet-shop-item';if(isOwned)cls+=' owned';if(isActive)cls+=' active';if(!isOwned&&!canAfford)cls+=' locked';let action;if(isActive)action='onclick="toast(\'使用中\')"';else if(isOwned)action='onclick="switchDoll(\''+dd.id+'\')"';else if(canAfford)action='onclick="unlockDoll(\''+dd.id+'\')"';else action='onclick="toast(\'需'+dd.cost+'积分\')"';return '<div class="'+cls+'" '+action+'><img class="pet-thumb" src="'+dd.img+'" alt="'+dd.name+'"><div style="font-weight:700;font-size:14px">'+dd.emoji+' '+dd.name+'</div><div class="pet-label">'+dd.desc+'</div><div class="pet-cost">'+(isOwned?(isActive?'✓ 使用中':'✅ 已解锁'):(canAfford?'💰 '+dd.cost+' 积分':'🔒 '+dd.cost+' 积分'))+'</div></div>';}).join('')+'</div></div><div class="card"><div class="section-ti">📝 玩法说明</div><p style="font-size:13px;color:var(--ink2)">每认识一个新字获得1积分。每学20个字就能解锁一个新娃娃～素颜免费，校服20分，运动40分，舞蹈60分，公主80分，汉服100分，魔法120分，派对150分。点卡片换装，点娃娃她开心摇头～</p></div></div>';
 };
 function dollClick(){ const img=document.getElementById('dollImg'); if(img){ img.classList.remove('clicked'); void img.offsetWidth; img.classList.add('clicked'); setTimeout(()=>img.classList.remove('clicked'),500); } speak('啦啦～今天真漂亮呀～'); }
-let dollDrag=null;
-function bindDollDrag(){
-  document.querySelectorAll('.drag-doll').forEach(function(item){
-    item.addEventListener('pointerdown',function(e){ if(e.button!==undefined&&e.button!==0)return; startDollDrag(e,item); });
-  });
-}
-function startDollDrag(e,item){
-  const id=item.dataset.id;
-  const isOwned=item.dataset.owned==='true';
-  const cost=parseInt(item.dataset.cost)||0;
-  const name=item.dataset.name||'';
-  const emoji=item.dataset.emoji||'';
-  if(!isOwned && S.petExp<cost){ toast('需要'+cost+'积分才能解锁 '+emoji+name); return; }
-  e.preventDefault();
-  const imgEl=item.querySelector('img');
-  const ghost=document.createElement('img');
-  ghost.className='doll-ghost';
-  ghost.src=imgEl.src;
-  document.body.appendChild(ghost);
-  dollDrag={id:id,isOwned:isOwned,cost:cost,name:name,emoji:emoji,ghost:ghost,startX:e.clientX,startY:e.clientY,moved:false};
-  const moveHandler=function(ev){
-    if(!dollDrag)return;
-    const dx=ev.clientX-dollDrag.startX, dy=ev.clientY-dollDrag.startY;
-    if(Math.abs(dx)>6||Math.abs(dy)>6)dollDrag.moved=true;
-    dollDrag.ghost.style.left=(ev.clientX-60)+'px';
-    dollDrag.ghost.style.top=(ev.clientY-60)+'px';
-    dollDrag.ghost.style.opacity='0.9';
-    dollDrag.ghost.style.transform='scale(1.1) rotate(-5deg)';
-    const stage=document.getElementById('dollStage');
-    if(stage){ const r=stage.getBoundingClientRect(); const inside=ev.clientX>=r.left&&ev.clientX<=r.right&&ev.clientY>=r.top&&ev.clientY<=r.bottom; stage.classList.toggle('drag-over',inside); }
-  };
-  const upHandler=function(ev){
-    document.removeEventListener('pointermove',moveHandler);
-    document.removeEventListener('pointerup',upHandler);
-    document.removeEventListener('pointercancel',upHandler);
-    if(!dollDrag)return;
-    const stage=document.getElementById('dollStage');
-    let dropped=false;
-    if(stage){ const r=stage.getBoundingClientRect(); if(ev.clientX>=r.left&&ev.clientX<=r.right&&ev.clientY>=r.top&&ev.clientY<=r.bottom)dropped=true; stage.classList.remove('drag-over'); }
-    if(dropped){ doDollSwitch(dollDrag); }
-    else if(!dollDrag.moved){ if(dollDrag.isOwned){ switchDoll(dollDrag.id); } else { unlockDoll(dollDrag.id); } }
-    if(dollDrag.ghost)dollDrag.ghost.remove();
-    dollDrag=null;
-  };
-  document.addEventListener('pointermove',moveHandler);
-  document.addEventListener('pointerup',upHandler);
-  document.addEventListener('pointercancel',upHandler);
-}
-function doDollSwitch(d){
-  if(d.id===S.currentDoll){ toast('当前正穿着 '+d.emoji+d.name); return; }
-  if(d.isOwned){ switchDoll(d.id); spawnDollSparkle(); }
-  else { unlockDoll(d.id); spawnDollSparkle(); }
-}
 function spawnDollSparkle(){
   const wrap=document.getElementById('dollWrap');
   if(!wrap)return;
@@ -575,9 +524,9 @@ function spawnDollSparkle(){
     setTimeout(function(el){return function(){el.remove()}}(s),1500);
   }
 }
-function dollMood(n){ if(n<=1) return '衣橱里只有素颜装，多识字换新衣服吧～'; if(n<=2) return '已经换上新衣服啦，好开心！'; if(n<=3) return '今天穿哪套好呢？都好好看！'; if(n<=4) return '我是最漂亮的换装娃娃！'; return '衣橱全满啦！我是时尚小达人～'; }
-function unlockDoll(id){ const d=DOLLS.find(x=>x.id===id); if(!d)return; if(S.petExp<d.cost){ toast('积分不够～');return;} if(!confirm('花 '+d.cost+' 积分兑换 '+d.emoji+d.name+'？'))return; S.petExp-=d.cost; if(!S.unlockedDolls)S.unlockedDolls=['doll_base']; S.unlockedDolls.push(id); S.currentDoll=id; save(); render('doll'); toast('🎉 解锁了 '+d.name); }
-function switchDoll(id){ S.currentDoll=id; save(); render('doll'); const d=DOLLS.find(x=>x.id===id); toast('已换上 '+d.name); }
+function dollMood(n){ if(n<=1) return '衣橱只有素颜装，学20字换新衣服吧～'; if(n<=2) return '换上新衣服啦，好开心！'; if(n<=4) return '今天穿哪套好呢？都好好看！'; if(n<=6) return '我是最漂亮的换装娃娃！'; return '衣橱全满啦！我是时尚小达人～'; }
+function unlockDoll(id){ const d=DOLLS.find(x=>x.id===id); if(!d)return; if(S.petExp<d.cost){ toast('积分不够～');return;} if(!confirm('花 '+d.cost+' 积分兑换 '+d.emoji+d.name+'？'))return; S.petExp-=d.cost; if(!S.unlockedDolls)S.unlockedDolls=['doll_base']; S.unlockedDolls.push(id); S.currentDoll=id; save(); render('doll'); spawnDollSparkle(); toast('🎉 解锁了 '+d.name); }
+function switchDoll(id){ S.currentDoll=id; save(); render('doll'); spawnDollSparkle(); const d=DOLLS.find(x=>x.id===id); toast('已换上 '+d.name); }
 function equip(cat, id){ S.equipped[cat]=id; save(); render('pet'); toast('已穿戴～'); }
 function mood(exp){ if(exp<20) return '有点孤单，多识字陪陪我吧～'; if(exp<100) return '今天也很开心！'; if(exp<300) return '我们一起进步，真棒！'; return '我是识字大王，谢谢你陪我！'; }
 function pick(arr){return arr[Math.floor(Math.random()*arr.length)]}
